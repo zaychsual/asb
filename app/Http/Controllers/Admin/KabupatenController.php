@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Kabupaten;
+use App\Provinsi;
 use App\DetailUsers;
 use App\User;
 
@@ -54,7 +55,9 @@ class KabupatenController extends Controller
      */
     public function create()
     {
-        //
+        $prov = Provinsi::all()->pluck('name', 'id_prov');
+
+        return view('admin.kab.create', compact('prov'));
     }
 
     /**
@@ -65,7 +68,20 @@ class KabupatenController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        \DB::beginTransaction();
+        try {
+            $data = Kabupaten::create([
+                'id_prov' => $request->id_prov,
+                'id_kab' => $request->id_kab,
+                'name' => $request->nama,
+                'created_by' => \Auth::user()->id,
+            ]);
+            \DB::commit();
+        } catch (\Throwable $th) {
+            \DB::rollback();
+            throw $th;
+        }
+        return \redirect()->route('admin.kabupaten.index')->with('success',\trans('notif.notification.save_data.success'));
     }
 
     /**
@@ -87,7 +103,10 @@ class KabupatenController extends Controller
      */
     public function edit($id)
     {
-        //
+        $val = Kabupaten::find($id);
+        $prov = Provinsi::all()->pluck('name', 'id_prov');
+
+        return view('admin.kab.edit', compact('val', 'prov'));
     }
 
     /**
@@ -99,7 +118,22 @@ class KabupatenController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        \DB::beginTransaction();
+        try {
+            // dd($request);
+            $data = Kabupaten::find($id);
+            $data->id_prov = $request->id_prov;
+            $data->id_kab = $request->id_kab;
+            $data->name = $request->nama;
+            $data->updated_by = \Auth::user()->id;
+            $data->update();
+
+            \DB::commit();
+        } catch (\Throwable $th) {
+            \DB::rollback();
+            throw $th;
+        }
+        return \redirect()->route('admin.kabupaten.index')->with('success',\trans('notif.notification.save_data.success'));
     }
 
     /**
@@ -110,6 +144,12 @@ class KabupatenController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $data = Kabupaten::find($id);
+        $data->status  = Kabupaten::NotActive;
+        $data->updated_by = \Auth::user()->id;
+        $data->deleted_at = \Carbon\Carbon::now();
+        $data->update();
+
+        return \redirect()->route('admin.kabupaten.index')->with('success',\trans('notif.notification.delete_data.success'));
     }
 }

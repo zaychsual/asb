@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('content')
-{{-- @can('customer_create')
+@can('customer_create')
     <div style="margin-bottom: 10px;" class="row">
         <div class="col-lg-12">
             <a class="btn btn-primary float-right" href="{{ route("admin.kecamatan.create") }}">
@@ -8,19 +8,27 @@
             </a>
         </div>
     </div>
-@endcan --}}
+@endcan
 <div class="card">
     <div class="card-header">
         {{ trans('cruds.kecamatan.title_singular') }} {{ trans('global.list') }}
     </div>
-
     <div class="card-body">
         <div class="table-responsive">
-            <table class=" table table-bordered table-striped table-hover datatable">
+            <div class="float-right">
+                <form action="{{ route("admin.find-me") }}" method="GET">
+                    <input type="text" name="find" placeholder="" value="{{ old('cari') }}">
+                    <input type="submit" value="{{ trans('global.search') }}"><br />
+                </form>
+            </div>
+            <table id="table-kec" class=" table table-bordered table-striped table-hover">
                 <thead>
                     <tr>
                         <th width="10">
 
+                        </th>
+                        <th>
+                            Nomor Kecamatan
                         </th>
                         <th>
                             {{ trans('cruds.kecamatan.fields.nama') }}
@@ -34,16 +42,19 @@
                         <th>
                             Total Korlap
                         </th>
-                        {{-- <th>
+                        <th>
                             &nbsp;
-                        </th> --}}
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($kec as $key => $rows)
                         <tr data-entry-id="{{ $rows->id }}">
                             <td>
-
+                                {{ $key+1 }}
+                            </td>
+                            <td>
+                                {{ $rows->id_kec ?? '' }}
                             </td>
                             <td>
                                 <a href="{{ route('admin.report-member-kec', $rows->id) }}" target="_blank">
@@ -66,7 +77,7 @@
                                 @endphp
                                 {{ $count->tot }}
                             </td>
-                            {{-- <td>
+                            <td>
                                 @can('customer_show')
                                     <a class="btn btn-xs btn-primary" href="{{ route('admin.kecamatan.show', $rows->id) }}">
                                         <i class="fa fa-eye"></i> {{ trans('global.view') }}
@@ -88,18 +99,22 @@
                                         </button>
                                     </form>
                                 @endcan
-                            </td> --}}
-
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
+            <br />
+            <div class="float-right">
+                {{ $kec->links() }}
+            </div>
         </div>
     </div>
 </div>
 @section('scripts')
 @parent
 <script>
+    
     $(function () {
         let deleteButtonTrans = '{{ trans('global.datatables.delete') }}'
         let deleteButton = {

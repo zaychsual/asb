@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Kecamatan;
+use App\Provinsi;
+use App\Kabupaten;
 use App\DetailUsers;
 use App\User;
 
@@ -19,9 +21,20 @@ class KecamatanController extends Controller
     {
         $kec = Kecamatan::join('kabupatens', 'kabupatens.id_kab', '=', 'kecamatans.id_kab')
             ->selectRaw('kecamatans.id, kecamatans.id_kec , kecamatans.name as kec , kecamatans.status, kabupatens.name as kab')
-            ->get();
+            ->paginate(20);
+            // ->get();
 
-        return view('admin.kec.index', compact('kec'));
+        return view('admin.kec.index', ['kec' => $kec]);
+    }
+
+    public function findKec(Request $request)
+    {
+        $kec = Kecamatan::join('kabupatens', 'kabupatens.id_kab', '=', 'kecamatans.id_kab')
+            ->selectRaw('kecamatans.id, kecamatans.id_kec , kecamatans.name as kec , kecamatans.status, kabupatens.name as kab')
+            ->where('kecamatans.name', 'like', "%".$request->find."%")
+            ->paginate();
+
+        return view('admin.kec.index', ['kec' => $kec]);
     }
 
     public function reportMember($id)
@@ -56,7 +69,9 @@ class KecamatanController extends Controller
      */
     public function create()
     {
-        //
+        $kab = Kabupaten::all()->pluck('name', 'id_kab');
+
+        return view('admin.kec.create', compact('kab'));
     }
 
     /**
@@ -67,7 +82,20 @@ class KecamatanController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        \DB::beginTransaction();
+        try {
+            $data = Kecamatan::create([
+                'id_kab' => $request->id_kab,
+                'id_kec' => $request->id_kec,
+                'name' => $request->nama,
+                'created_by' => \Auth::user()->id,
+            ]);
+            \DB::commit();
+        } catch (\Throwable $th) {
+            \DB::rollback();
+            throw $th;
+        }
+        return \redirect()->route('admin.kecamatan.index')->with('success',\trans('notif.notification.save_data.success'));
     }
 
     /**
@@ -89,7 +117,11 @@ class KecamatanController extends Controller
      */
     public function edit($id)
     {
-        //
+        $kec = Kecamatan::find($id);
+        $kab = Kabupaten::all()->pluck('name', 'id_kab');
+
+        return view('admin.kec.edit', compact('kec', 'kab'));
+        
     }
 
     /**
@@ -101,7 +133,22 @@ class KecamatanController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        \DB::beginTransaction();
+        try {
+            // dd($request);
+            $data = Kecamatan::find($id);
+            $data->id_kab = $request->id_kab;
+            $data->id_kec = $request->id_kec;
+            $data->name = $request->nama;
+            $data->updated_by = \Auth::user()->id;
+            $data->update();
+
+            \DB::commit();
+        } catch (\Throwable $th) {
+            \DB::rollback();
+            throw $th;
+        }
+        return \redirect()->route('admin.kecamatan.index')->with('success',\trans('notif.notification.save_data.success'));
     }
 
     /**
@@ -112,6 +159,12 @@ class KecamatanController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $data = Kecamatan::find($id);
+        $data->status  = Kecamatan::NotActive;
+        $data->updated_by = \Auth::user()->id;
+        $data->deleted_at = \Carbon\Carbon::now();
+        $data->update();
+
+        return \redirect()->route('admin.kecamatan.index')->with('success',\trans('notif.notification.delete_data.success'));
     }
 }

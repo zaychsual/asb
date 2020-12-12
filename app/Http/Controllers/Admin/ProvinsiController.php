@@ -54,7 +54,7 @@ class ProvinsiController extends Controller
      */
     public function create()
     {
-        //
+        return view('admin.prov.create');
     }
 
     /**
@@ -65,7 +65,21 @@ class ProvinsiController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        \DB::beginTransaction();
+        try {
+            // dd($request);
+            $data = Provinsi::create([
+                'zona_waktu' => $request->zona_waktu,
+                'id_prov' => $request->id_prov,
+                'name' => $request->nama,
+                'created_by' => \Auth::user()->id,
+            ]);
+            \DB::commit();
+        } catch (\Throwable $th) {
+            \DB::rollback();
+            throw $th;
+        }
+        return \redirect()->route('admin.provinsi.index')->with('success',\trans('notif.notification.save_data.success'));
     }
 
     /**
@@ -86,8 +100,10 @@ class ProvinsiController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function edit($id)
-    {
-        //
+    {   
+        $val = Provinsi::find($id);
+
+        return view('admin.prov.edit', compact('val'));
     }
 
     /**
@@ -99,7 +115,22 @@ class ProvinsiController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        \DB::beginTransaction();
+        try {
+            // dd($request);
+            $data = Provinsi::find($id);
+            $data->zona_waktu = $request->zona_waktu;
+            $data->id_prov = $request->id_prov;
+            $data->name = $request->nama;
+            $data->updated_by = \Auth::user()->id;
+            $data->update();
+
+            \DB::commit();
+        } catch (\Throwable $th) {
+            \DB::rollback();
+            throw $th;
+        }
+        return \redirect()->route('admin.provinsi.index')->with('success',\trans('notif.notification.save_data.success'));
     }
 
     /**
@@ -110,6 +141,12 @@ class ProvinsiController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $data = Provinsi::find($id);
+        $data->status  = Provinsi::NotActive;
+        $data->updated_by = \Auth::user()->id;
+        $data->deleted_at = \Carbon\Carbon::now();
+        $data->update();
+
+        return \redirect()->route('admin.provinsi.index')->with('success',\trans('notif.notification.delete_data.success'));
     }
 }

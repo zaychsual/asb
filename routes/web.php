@@ -84,6 +84,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'namespace' => 'Admin', 'mi
     Route::resource('kabupaten', 'KabupatenController');
     Route::get('report-member-kab/{id}', 'KabupatenController@reportMember')->name('report-member-kab');
     Route::resource('kecamatan', 'KecamatanController');
+    Route::get('find-me', 'KecamatanController@findKec')->name('find-me');
     Route::get('report-member-kec/{id}', 'KecamatanController@reportMember')->name('report-member-kec');
     Route::resource('kelurahan', 'KelurahanController');
     Route::get('report-member-kel/{id}', 'KelurahanController@reportMember')->name('report-member-kel');
